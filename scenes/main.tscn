@@ -1,69 +1,105 @@
 [gd_scene format=3 uid="uid://buiuxesqqpbb8"]
 
+[ext_resource type="Script" uid="uid://3ujjc6mjfhnf" path="res://scripts/AlbedoPass.cs" id="1_jyhfs"]
 [ext_resource type="Material" uid="uid://cn65gsntxlvvx" path="res://assets/kenney-prototype/material/Dark/dark-03.tres" id="1_sugp2"]
 [ext_resource type="PackedScene" uid="uid://orot6papirkp" path="res://scenes/characters/character_male.tscn" id="2_0wfyh"]
-[ext_resource type="Shader" uid="uid://b7lm8gp265k5r" path="res://shaders/camera_post_process.gdshader" id="2_sugp2"]
+[ext_resource type="Shader" uid="uid://46s7tb4kakhl" path="res://shaders/composite_dither.gdshader" id="4_jyhfs"]
 
 [sub_resource type="PlaneMesh" id="PlaneMesh_0wfyh"]
-
-[sub_resource type="QuadMesh" id="QuadMesh_2iv3x"]
-size = Vector2(2, 2)
-
-[sub_resource type="ShaderMaterial" id="ShaderMaterial_0wfyh"]
-render_priority = 0
-shader = ExtResource("2_sugp2")
 
 [sub_resource type="Environment" id="Environment_0wfyh"]
 background_mode = 1
 background_color = Color(0.5094468, 0.8295106, 1, 1)
-ambient_light_source = 2
-ambient_light_color = Color(0.50980395, 0.83137256, 1, 1)
-reflected_light_source = 1
+reflected_light_source = 2
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_o5qli"]
 
 [sub_resource type="Compositor" id="Compositor_o5qli"]
 
-[node name="Root" type="Node3D" unique_id=1186803938]
+[sub_resource type="ViewportTexture" id="ViewportTexture_o6xl0"]
+viewport_path = NodePath("WorldEnvironment/AlbedoViewPort")
 
-[node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1042962398]
+[sub_resource type="ViewportTexture" id="ViewportTexture_tefeu"]
+viewport_path = NodePath("WorldViewPort")
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_sugp2"]
+resource_local_to_scene = true
+shader = ExtResource("4_jyhfs")
+shader_parameter/lit_tex = SubResource("ViewportTexture_tefeu")
+shader_parameter/albedo_tex = SubResource("ViewportTexture_o6xl0")
+shader_parameter/pixel_size = 4
+shader_parameter/shade_steps = 3.0
+shader_parameter/dither_strength = 0.5
+shader_parameter/ambient_color = Color(0.51, 0.83, 1, 1)
+shader_parameter/ambient_energy = 1.0
+
+[node name="Root" type="Node3D" unique_id=1186803938 node_paths=PackedStringArray("WorldViewport", "AlbedoViewport", "SourceCamera", "AlbedoCamera")]
+script = ExtResource("1_jyhfs")
+WorldViewport = NodePath("WorldViewPort")
+AlbedoViewport = NodePath("WorldEnvironment/AlbedoViewPort")
+SourceCamera = NodePath("WorldViewPort/Camera3D")
+AlbedoCamera = NodePath("WorldEnvironment/AlbedoViewPort/AlbedoCamera")
+
+[node name="WorldViewPort" type="SubViewport" parent="." unique_id=1156245182]
+render_target_update_mode = 4
+
+[node name="SpotLight3D" type="SpotLight3D" parent="WorldViewPort" unique_id=1784465440]
+transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, -1.0788145, 2.1305423, -2.440914)
+light_color = Color(1, 0, 0, 1)
+light_energy = 16.0
+shadow_enabled = true
+
+[node name="SpotLight3D2" type="SpotLight3D" parent="WorldViewPort" unique_id=1199603939]
+transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, 0.98440826, 2.1305423, -2.440914)
+light_color = Color(0, 0.62180674, 0.17531163, 1)
+light_energy = 16.0
+shadow_enabled = true
+
+[node name="SpotLight3D3" type="SpotLight3D" parent="WorldViewPort" unique_id=67081648]
+transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, 0.12738144, 2.1305423, -4.3254623)
+light_color = Color(0.19870827, 0.47878146, 1, 1)
+light_energy = 16.0
+shadow_enabled = true
+
+[node name="DirectionalLight3D" type="DirectionalLight3D" parent="WorldViewPort" unique_id=857053356]
+transform = Transform3D(1, 0, 0, 0, 0.012269805, 0.9999247, 0, -0.9999247, 0.012269805, 0, 39.724884, 0)
+light_bake_mode = 1
+shadow_enabled = true
+sky_mode = 2
+
+[node name="Camera3D" type="Camera3D" parent="WorldViewPort" unique_id=523824738]
+transform = Transform3D(0.851227, 0.43558985, -0.29270154, 0, 0.5577416, 0.8300147, 0.5247978, -0.70653087, 0.47476467, -1.4310101, 4.085642, -1.1064768)
+current = true
+fov = 80.0
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="WorldViewPort" unique_id=1042962398]
 transform = Transform3D(100, 0, 0, 0, 1, 0, 0, 0, 100, -0.008990288, 0.027664185, -0.011756897)
 material_override = ExtResource("1_sugp2")
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_0wfyh")
 
-[node name="Camera3D" type="Camera3D" parent="." unique_id=523824738]
-transform = Transform3D(1, 0, 0, 0, 0.8979204, 0.44015786, 0, -0.44015786, 0.8979204, 0, 3.0085466, 2.605462)
-current = true
-fov = 80.0
-
-[node name="MeshInstance3D2" type="MeshInstance3D" parent="Camera3D" unique_id=1678306892]
-extra_cull_margin = 16384.0
-mesh = SubResource("QuadMesh_2iv3x")
-surface_material_override/0 = SubResource("ShaderMaterial_0wfyh")
-
-[node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=857053356]
-transform = Transform3D(1, 0, 0, 0, 0.012269805, 0.9999247, 0, -0.9999247, 0.012269805, 0, 39.724884, 0)
-light_bake_mode = 1
+[node name="Characters" parent="WorldViewPort" unique_id=1053989061 instance=ExtResource("2_0wfyh")]
+transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.2559767)
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1342311429]
 environment = SubResource("Environment_0wfyh")
 camera_attributes = SubResource("CameraAttributesPractical_o5qli")
 compositor = SubResource("Compositor_o5qli")
 
-[node name="Characters" parent="." unique_id=1053989061 instance=ExtResource("2_0wfyh")]
+[node name="AlbedoViewPort" type="SubViewport" parent="WorldEnvironment" unique_id=786992958]
+render_target_update_mode = 4
 
-[node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=1784465440]
-transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, -1.0788145, 2.1305423, -2.440914)
-light_color = Color(1, 0, 0, 1)
-light_energy = 16.0
+[node name="AlbedoCamera" type="Camera3D" parent="WorldEnvironment/AlbedoViewPort" unique_id=1088984920]
+transform = Transform3D(1, 0, 0, 0, 0.8979204, 0.44015786, 0, -0.44015786, 0.8979204, 0, 3.0085466, 2.605462)
+fov = 80.0
 
-[node name="SpotLight3D2" type="SpotLight3D" parent="." unique_id=1199603939]
-transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, 0.98440826, 2.1305423, -2.440914)
-light_color = Color(0, 0.62180674, 0.17531163, 1)
-light_energy = 16.0
+[node name="CanvasLayer" type="CanvasLayer" parent="WorldEnvironment" unique_id=226716321]
 
-[node name="SpotLight3D3" type="SpotLight3D" parent="." unique_id=67081648]
-transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, 0.12738144, 2.1305423, -4.3254623)
-light_color = Color(0.19870827, 0.47878146, 1, 1)
-light_energy = 16.0
+[node name="ColorRect" type="ColorRect" parent="WorldEnvironment/CanvasLayer" unique_id=170766049]
+material = SubResource("ShaderMaterial_sugp2")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(1, 0, 1, 1)
