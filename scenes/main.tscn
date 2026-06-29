@@ -4,6 +4,7 @@
 [ext_resource type="Shader" uid="uid://csd01vfpnhm37" path="res://shaders/pixelate.gdshader" id="2_pix"]
 [ext_resource type="Shader" uid="uid://cnlbvpcdwkp20" path="res://shaders/light_dither.gdshader" id="3_lit"]
 [ext_resource type="Texture2D" uid="uid://bsjownlhhg68d" path="res://assets/kenney-prototype/PNG/Dark/texture_03.png" id="4_tex"]
+[ext_resource type="Script" uid="uid://bdne42ch5k4ba" path="res://scripts/DitherControls.cs" id="5_dith"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_pp"]
 render_priority = 0
@@ -16,11 +17,6 @@ size = Vector2(2, 2)
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_ground"]
 render_priority = 0
 shader = ExtResource("3_lit")
-shader_parameter/dither_light_steps = 3.0
-shader_parameter/dither_strength = 1.0
-shader_parameter/dither_block_size = 4.0
-shader_parameter/dither_skip_directional = true
-shader_parameter/dither_light_gain = 21.955
 shader_parameter/albedo_tex = ExtResource("4_tex")
 shader_parameter/albedo_tint = Color(1, 1, 1, 1)
 shader_parameter/use_texture = true
@@ -30,8 +26,6 @@ shader_parameter/uv_scale = 1.0
 [sub_resource type="PlaneMesh" id="PlaneMesh_0wfyh"]
 
 [sub_resource type="Environment" id="Environment_0wfyh"]
-background_mode = 1
-background_color = Color(0.5094468, 0.8295106, 1, 1)
 reflected_light_source = 2
 
 [sub_resource type="CameraAttributesPractical" id="CameraAttributesPractical_o5qli"]
@@ -41,14 +35,14 @@ reflected_light_source = 2
 [node name="Root" type="Node3D" unique_id=1186803938]
 
 [node name="SpotLight3D" type="SpotLight3D" parent="." unique_id=1784465440]
-transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, -1.2102396, 2.1305423, -2.440914)
+transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, 0.9115243, 2.1305423, 0.542366)
 light_color = Color(1, 0, 0, 1)
 light_energy = 16.0
 light_size = 1.0
 shadow_enabled = true
 
 [node name="SpotLight3D2" type="SpotLight3D" parent="." unique_id=1199603939]
-transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, 0.98440826, 2.1305423, -2.440914)
+transform = Transform3D(1, 0, 0, 0, 0.17849277, 0.9839412, 0, -0.9839412, 0.17849277, 0.950379, 2.1305423, -2.4453158)
 light_color = Color(0, 0.62180674, 0.17531163, 1)
 light_energy = 16.0
 shadow_enabled = true
@@ -61,6 +55,9 @@ shadow_enabled = true
 
 [node name="DirectionalLight3D" type="DirectionalLight3D" parent="." unique_id=857053356]
 transform = Transform3D(1, 0, 0, 0, 0.012269805, 0.9999247, 0, -0.9999247, 0.012269805, 0, 39.724884, 0)
+light_energy = 0.5
+light_indirect_energy = 0.5
+light_volumetric_fog_energy = 0.5
 light_bake_mode = 1
 shadow_enabled = true
 
@@ -76,7 +73,7 @@ extra_cull_margin = 16384.0
 mesh = SubResource("QuadMesh_pp")
 
 [node name="MeshInstance3D" type="MeshInstance3D" parent="." unique_id=1042962398]
-transform = Transform3D(100, 0, 0, 0, 1, 0, 0, 0, 100, -0.008990288, 0.027664185, -0.011756897)
+transform = Transform3D(100, 0, 0, 0, 1, 0, 0, 0, 100, -0.010578036, 0.027664304, -0.011061668)
 material_override = SubResource("ShaderMaterial_ground")
 cast_shadow = 0
 mesh = SubResource("PlaneMesh_0wfyh")
@@ -88,3 +85,8 @@ transform = Transform3D(1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 0, -3.2559767)
 environment = SubResource("Environment_0wfyh")
 camera_attributes = SubResource("CameraAttributesPractical_o5qli")
 compositor = SubResource("Compositor_o5qli")
+
+[node name="DitherControls" type="Node" parent="." unique_id=500500500]
+script = ExtResource("5_dith")
+Strength = 0.6
+LightGain = 1.5
