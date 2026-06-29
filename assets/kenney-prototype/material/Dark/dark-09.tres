@@ -1,0 +1,10 @@
+[gd_resource type="StandardMaterial3D" format=3 uid="uid://514uqlrx51kg"]
+
+[sub_resource type="CompressedTexture2D" id="CompressedTexture2D_yiwaf"]
+load_path = "res://.godot/imported/texture_10.svg-a7e53febbc0651cf5a6d43ed588bc2a4.s3tc.ctex"
+
+[resource]
+vertex_color_is_srgb = true
+albedo_texture = SubResource("CompressedTexture2D_yiwaf")
+uv1_triplanar = true
+uv1_world_triplanar = true
