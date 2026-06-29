@@ -1,6 +1,20 @@
-[gd_scene format=3 uid="uid://orot6papirkp"]
+[gd_scene load_steps=5 format=3 uid="uid://orot6papirkp"]
 
 [ext_resource type="PackedScene" uid="uid://4vqrq23k4fa6" path="res://assets/polygon-starter/SourceFiles/FBX/Characters.fbx" id="1_28y7x"]
+[ext_resource type="Shader" uid="uid://cnlbvpcdwkp20" path="res://shaders/light_dither.gdshader" id="2_lit"]
+[ext_resource type="Texture2D" uid="uid://2iklkue3wj8i" path="res://assets/polygon-starter/SourceFiles/Textures/PolygonStarter_Texture_01.png" id="3_atlas"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_char"]
+shader = ExtResource("2_lit")
+shader_parameter/albedo_tex = ExtResource("3_atlas")
+shader_parameter/albedo_tint = Color(1, 1, 1, 1)
+shader_parameter/use_texture = true
+shader_parameter/world_uv = false
+shader_parameter/uv_scale = 1.0
+shader_parameter/dither_light_steps = 4.0
+shader_parameter/dither_strength = 0.8
+shader_parameter/dither_block_size = 4.0
+shader_parameter/dither_skip_directional = true
 
 [node name="Characters" unique_id=1053989061 instance=ExtResource("1_28y7x")]
 
@@ -146,9 +160,16 @@ bone_idx = 6
 [node name="Character_Hair_Male_01" parent="Skeleton3D" index="1" unique_id=173305560]
 transform = Transform3D(0.99989885, 0.0055266507, -0.013127348, -0.0069879442, 0.9934558, -0.114003666, 0.012411339, 0.11408376, 0.99339366, 0.02340953, 1.5562519, 0.08538121)
 bone_idx = 6
+material_override = SubResource("ShaderMaterial_char")
 
 [node name="Character_Female_Face_01" parent="Skeleton3D" index="3" unique_id=92905309]
 visible = false
+
+[node name="Character_Male_Face_01" parent="Skeleton3D" index="2" unique_id=92905310]
+material_override = SubResource("ShaderMaterial_char")
+
+[node name="Character" parent="Skeleton3D" index="4" unique_id=92905311]
+material_override = SubResource("ShaderMaterial_char")
 
 [node name="AnimationPlayer" parent="." index="1" unique_id=1433262728]
 autoplay = &"Take 001"
