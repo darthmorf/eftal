@@ -2,18 +2,19 @@
 
 A C++20 DirectX 12 renderer / engine / game, targeting Shader Model 6.0. A learning project.
 
-**Status:** build skeleton only. Nothing opens a window or renders yet. See [TODOS.md](TODOS.md).
+**Status:** opens a GLFW window and clears it to a colour with D3D12 every frame. All of it currently lives in `Game/src/Main.cpp`; Core and Graphics are still empty. See [TODOS.md](TODOS.md).
 
 ## Requirements
 
-- Windows, x64
+- Windows 10 or 11, x64
+- A D3D12 GPU supporting feature level 12_0 (roughly NVIDIA GTX 900 / AMD GCN 2 / Intel Skylake or newer)
 - Visual Studio 2022 with the "Desktop development with C++" workload
 - [premake5](https://premake.github.io/download) (5.0 beta), placed at `Tools/premake/premake5.exe`
 
 ## Getting started
 
 ```
-git clone --recursive <repo-url>
+git clone --recursive https://github.com/darthmorf/eftal.git
 ```
 
 Already cloned without `--recursive`? Run `git submodule update --init`.
@@ -27,7 +28,7 @@ Then either:
 
 | Path | Contents |
 |---|---|
-| `Game/` | Application entry point (`Game.exe`). Links Core, Graphics, GLFW. |
+| `Game/` | Application entry point (`Game.exe`). Links Core, Graphics, GLFW and the D3D12/DXGI system libs. |
 | `Core/` | Core engine features (static lib). |
 | `Graphics/` | Rendering (static lib, links Core). |
 | `ThirdParty/` | Third-party code as git submodules, each with a premake script next to it (e.g. `glfw.lua`). |
@@ -48,7 +49,22 @@ Use `#if DEBUG` / `#if RELEASE`. Both are always defined, and warning C4668 (und
 
 Projects build into `<Project>/Build/Bin/<Config>/` (intermediates in `<Project>/Build/Obj/<Config>/<Project>/`). After building, `Game.exe` and `Game.pdb` are copied to `bin/<Config>/`.
 
-Game is a windowed app (no console window) with a standard `int main()` entry point.
+Game is currently a console app, so `stdout`/`stderr` output appears in its console window.
+
+## Renderer (current state)
+
+- **Device:** picks the highest-performance hardware adapter (`IDXGIFactory6::EnumAdapterByGpuPreference`), minimum feature level 12_0.
+- **Swap chain:** 3 back buffers, flip-discard, created from the GLFW window's HWND. Alt+Enter handling by DXGI is disabled.
+- **Per frame:** one command allocator per back buffer, a single reused command list, `PRESENT` → `RENDER_TARGET` → clear → `PRESENT` barriers, then execute and present.
+- **Synchronisation:** one fence; each frame slot stores the fence value signalled after its work, and the CPU waits on it before reusing that slot. The GPU is flushed before shutdown.
+
+### Debugging
+
+In Debug builds the D3D12 and DXGI debug layers are enabled:
+
+- When a debugger is attached, errors (and D3D12 warnings) break inside the offending API call. VS reports this as exception `0x0000087A`; that is the debug layer, not a crash.
+- `CHECK_HR(expr)` wraps calls returning `HRESULT`. On failure it prints the debug-layer messages and the failing call to the console, breaks if a debugger is attached, and returns from `main`.
+- For errors from `void` calls (no `HRESULT`), while stopped in the debugger run `DumpDebugMessages()` in the Immediate window to print the stored messages to the console.
 
 ## Hot reload
 
@@ -59,3 +75,4 @@ Core and Graphics are static libraries rather than DLLs, so there's no runtime c
 | Library | Version | Used for |
 |---|---|---|
 | [GLFW](https://www.glfw.org/) | 3.4 | Window creation and input (used with `GLFW_NO_API`; DX12 gets the HWND via `glfwGetWin32Window`) |
+| [DirectX-Headers](https://github.com/microsoft/DirectX-Headers) | 1.721.2 | Header-only: `d3dx12.h` helpers and newer `d3d12.h`. Include as `<directx/d3d12.h>` / `<directx/d3dx12.h>`, not the Windows SDK's `<d3d12.h>`. |
