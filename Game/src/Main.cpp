@@ -1,3 +1,4 @@
+#include <cmath>
 #include <cstdio>
 
 #include <GLFW/glfw3.h>
@@ -198,7 +199,9 @@ int main()
         CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
         commandList->ResourceBarrier(1, &barrier);
 
-        FLOAT clearColour[] = { 0.4f, 0.6f, 0.9f, 1.0f };
+        // Three sine waves a third of a cycle apart give a smooth hue cycle.
+        const float t = static_cast<float>(glfwGetTime());
+        FLOAT clearColour[] = { 0.5f + 0.5f * sinf(t), 0.5f + 0.5f * sinf(t + 2.094f), 0.5f + 0.5f * sinf(t + 4.189f), 1.0f };
         CD3DX12_CPU_DESCRIPTOR_HANDLE rtv(descriptorHeap->GetCPUDescriptorHandleForHeapStart(), frameIdx, rtvDescriptorSize);
 
         commandList->ClearRenderTargetView(rtv, clearColour, 0, nullptr);
