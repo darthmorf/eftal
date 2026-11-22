@@ -3,9 +3,9 @@ project "Game"
     kind "ConsoleApp"
 
     files { "src/**.h", "src/**.cpp" }
-    includedirs { "src", "../Core/src", "../Graphics/src" }
+    includedirs { "src", "../Core/src", "../Graphics/src", "../ThirdParty/glfw/include" }
 
-    links { "Core", "Graphics" }
+    links { "Core", "Graphics", "GLFW" }
 
     debugdir (BinDir)
     debugcommand (BinDir .. "/%{cfg.buildtarget.name}")
