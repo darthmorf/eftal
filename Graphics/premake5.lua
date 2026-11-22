@@ -3,6 +3,6 @@ project "Graphics"
     kind "StaticLib"
 
     files { "src/**.h", "src/**.cpp" }
-    includedirs { "src", "../Core/src" }
+    includedirs { "src", "../Core/src", "../ThirdParty/DirectX-Headers/include" }
 
     links { "Core" }
