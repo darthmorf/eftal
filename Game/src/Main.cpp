@@ -1,4 +1,3 @@
-
 #include <cstdio>
 
 #include <GLFW/glfw3.h>
@@ -7,7 +6,6 @@
 
 #include <directx/d3d12.h>
 #include <dxgi1_6.h>
-#include <DirectXMath.h>
 #include <directx/d3dx12.h>
 
 #include <wrl/client.h>
@@ -50,6 +48,7 @@ int main()
     if (!glfwInit())
         return -1; // TODO_ASSERT, Asserts when we have them
 
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE); // TODO_WINDOW_RESIZE
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API); // We're using DX12 so we want 'no api'.
 
     const int width = 640;
@@ -138,7 +137,7 @@ int main()
     ComPtr<IDXGISwapChain4> dxgiSwapChain;
     CHECK_HR(dxgiFactory->CreateSwapChainForHwnd(d3d12CommandQueue.Get(), windowHdl, &swapChainDesc, nullptr, nullptr, &dxgiSwapChain_1));
     CHECK_HR(dxgiSwapChain_1.As(&dxgiSwapChain));
-    CHECK_HR(dxgiFactory->MakeWindowAssociation(windowHdl, DXGI_MWA_VALID));
+    CHECK_HR(dxgiFactory->MakeWindowAssociation(windowHdl, DXGI_MWA_VALID)); // TODO_FULLSCREEN
 
     ComPtr<ID3D12DescriptorHeap> descriptorHeap;
     D3D12_DESCRIPTOR_HEAP_DESC descriptorHeapDesc = {};
@@ -150,7 +149,7 @@ int main()
     UINT rtvDescriptorSize = d3d12device->GetDescriptorHandleIncrementSize(D3D12_DESCRIPTOR_HEAP_TYPE_RTV);
     CD3DX12_CPU_DESCRIPTOR_HANDLE rtvHandle(descriptorHeap->GetCPUDescriptorHandleForHeapStart());
 
-    for (int i = 0; i < framesInFlight; i++)
+    for (UINT i = 0; i < framesInFlight; i++)
     {
         ComPtr<ID3D12Resource> backBuffer;
         CHECK_HR(dxgiSwapChain->GetBuffer(i, IID_PPV_ARGS(&backBuffer)));
@@ -161,7 +160,7 @@ int main()
     }
 
     ComPtr<ID3D12CommandAllocator> commandAllocators[framesInFlight];
-    for (int i = 0; i < framesInFlight; i++)
+    for (UINT i = 0; i < framesInFlight; i++)
         CHECK_HR(d3d12device->CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE_DIRECT, IID_PPV_ARGS(&commandAllocators[i])));
 
     ComPtr<ID3D12Fence> fence;
@@ -173,30 +172,30 @@ int main()
         return -1; // TODO_ASSERT
 
 
-    int frameIdx = dxgiSwapChain->GetCurrentBackBufferIndex();
+    UINT frameIdx = dxgiSwapChain->GetCurrentBackBufferIndex();
 
     ComPtr<ID3D12GraphicsCommandList> commandList;
     CHECK_HR(d3d12device->CreateCommandList(0, D3D12_COMMAND_LIST_TYPE_DIRECT, commandAllocators[frameIdx].Get(), nullptr, IID_PPV_ARGS(&commandList)));
     CHECK_HR(commandList->Close());
 
     // Game loop
-    fprintf(stdout, "[GLFW] Polling");
+    fprintf(stdout, "[GLFW] Polling...\n");
     while (!glfwWindowShouldClose(window))
     {
         // Wait until the GPU has finished the last frame that used this slot.
         if (fence->GetCompletedValue() < frameFenceValues[frameIdx])
         {
             CHECK_HR(fence->SetEventOnCompletion(frameFenceValues[frameIdx], fenceEvent));
-            WaitForSingleObject(fenceEvent, INFINITE); // TODO We should timeout eventually
+            WaitForSingleObject(fenceEvent, INFINITE); // TODO_SYNC: time out instead of waiting forever
         }
 
-        ComPtr<ID3D12CommandAllocator> commandAllocator = commandAllocators[frameIdx].Get();
-        ComPtr<ID3D12Resource> backBuffer = backBuffers[frameIdx].Get();
+        ID3D12CommandAllocator* commandAllocator = commandAllocators[frameIdx].Get();
+        ID3D12Resource* backBuffer = backBuffers[frameIdx].Get();
 
         CHECK_HR(commandAllocator->Reset());
-        CHECK_HR(commandList->Reset(commandAllocator.Get(), nullptr));
+        CHECK_HR(commandList->Reset(commandAllocator, nullptr));
 
-        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer.Get(), D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
+        CD3DX12_RESOURCE_BARRIER barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_PRESENT, D3D12_RESOURCE_STATE_RENDER_TARGET);
         commandList->ResourceBarrier(1, &barrier);
 
         FLOAT clearColour[] = { 0.4f, 0.6f, 0.9f, 1.0f };
@@ -204,7 +203,7 @@ int main()
 
         commandList->ClearRenderTargetView(rtv, clearColour, 0, nullptr);
 
-        barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer.Get(), D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
+        barrier = CD3DX12_RESOURCE_BARRIER::Transition(backBuffer, D3D12_RESOURCE_STATE_RENDER_TARGET, D3D12_RESOURCE_STATE_PRESENT);
         commandList->ResourceBarrier(1, &barrier);
 
         CHECK_HR(commandList->Close());
@@ -224,7 +223,6 @@ int main()
 
         frameIdx = dxgiSwapChain->GetCurrentBackBufferIndex();
 
-        fprintf(stdout, ".");
         glfwPollEvents();
     }
 
@@ -233,6 +231,12 @@ int main()
     CHECK_HR(fence->SetEventOnCompletion(fenceValue, fenceEvent));
     WaitForSingleObject(fenceEvent, INFINITE);
     CloseHandle(fenceEvent);
+
+#if DEBUG
+    // The D3D12 info queue holds a device reference; release both before main returns.
+    g_d3d12InfoQueue.Reset();
+    g_dxgiInfoQueue.Reset();
+#endif
 
     // Cleanup GLFW
     glfwDestroyWindow(window);
