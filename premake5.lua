@@ -14,8 +14,11 @@ workspace "eftal"
     externalanglebrackets "On"
     externalwarnings "Off"
 
-    targetdir "%{prj.location}/Build/Bin/%{cfg.buildcfg}"
-    objdir "%{prj.location}/Build/Obj/%{cfg.buildcfg}/%{prj.name}"
+    targetdir "%{wks.location}/Bin/%{cfg.buildcfg}"
+    objdir "%{wks.location}/Build/Obj/%{cfg.buildcfg}/%{prj.name}"
+
+    filter "kind:StaticLib"
+        targetdir "%{wks.location}/Build/Lib/%{cfg.buildcfg}"
 
     filter "configurations:Debug"
         defines { "_DEBUG", "DEBUG=1", "RELEASE=0" }
@@ -32,7 +35,7 @@ workspace "eftal"
 
     filter {}
 
-BinDir = "%{wks.location}/bin/%{cfg.buildcfg}"
+ProjectDir = path.join(_MAIN_SCRIPT_DIR, "Build/Projects")
 
 group "ThirdParty"
     include "ThirdParty/glfw.lua"

@@ -1,5 +1,5 @@
 project "GLFW"
-    location "."
+    location (ProjectDir)
     kind "StaticLib"
     language "C"
 

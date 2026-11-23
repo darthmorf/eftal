@@ -1,6 +1,6 @@
 project "Core"
-    location "."
+    location (ProjectDir)
     kind "StaticLib"
 
-    files { "src/**.h", "src/**.cpp" }
-    includedirs { "src" }
+    files { "**.h", "**.cpp" }
+    includedirs { ".." }

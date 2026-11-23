@@ -10,13 +10,13 @@ function Invoke-Premake {
     return $LASTEXITCODE -eq 0
 }
 
-# .lua edits change project settings; adding/removing/renaming files under src/ changes the globbed file lists.
+# .lua edits change project settings; adding/removing/renaming source files changes the globbed file lists.
 # Submodules under ThirdParty/ are ignored, their own files never affect our projects.
 function Test-Relevant([string]$path, [string]$change) {
     $rel = $path.Substring($root.Length + 1)
     if ($rel -match '^ThirdParty\\[^\\]+\\') { return $false }
     if ($rel -like '*.lua') { return $true }
-    return ($rel -match '^[^\\]+\\src\\') -and ($change -ne 'Changed')
+    return ($rel -match '^[^\\]+\\.+\.(h|cpp)$') -and ($change -ne 'Changed')
 }
 
 if (-not (Invoke-Premake)) {

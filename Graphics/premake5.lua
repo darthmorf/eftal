@@ -1,8 +1,8 @@
 project "Graphics"
-    location "."
+    location (ProjectDir)
     kind "StaticLib"
 
-    files { "src/**.h", "src/**.cpp" }
-    includedirs { "src", "../Core/src", "../ThirdParty/DirectX-Headers/include" }
+    files { "**.h", "**.cpp" }
+    includedirs { "..", "../ThirdParty/DirectX-Headers/include" }
 
     links { "Core" }
