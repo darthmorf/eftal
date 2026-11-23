@@ -19,6 +19,9 @@ Persistent context for Claude. Not human-facing documentation (that's README.md)
   - `Core/Macros.h`: shared utility macros (`ARRAY_COUNT`, `CLAMP`).
   - `Core/Core.cpp`, `Graphics/Graphics.cpp`: empty placeholders. Splitting Main.cpp into Core/Graphics hasn't been designed - ask before restructuring.
 
+## Research library
+- Rendering research (PBR, IBL, shadows, post, DX12 architecture, raytracing tiers, denoising, tools, roadmap) with recommended sources lives in `Docs/LLM_Research/`. For rendering questions, read `Docs/LLM_Research/README.md` first, then only the relevant topic file. The developer wants sources to learn from, not solutions.
+
 ## Environment and build
 - Repo is on Windows; Claude runs in WSL2 Ubuntu via `claude.bat`. Builds/runs happen in VS2022 on Windows; Claude can't build. Ask before assuming a toolchain.
 - Git branch `main`, remote `origin` on GitHub. Submodules: ThirdParty/glfw (3.4), ThirdParty/DirectX-Headers (v1.721.2).
