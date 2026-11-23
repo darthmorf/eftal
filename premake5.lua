@@ -10,6 +10,7 @@ workspace "eftal"
     system "windows"
     systemversion "latest"
 
+    defines { "NOMINMAX", "WIN32_LEAN_AND_MEAN" }
     buildoptions { "/we4668" }
     externalanglebrackets "On"
     externalwarnings "Off"
