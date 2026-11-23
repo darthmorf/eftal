@@ -1,64 +1,69 @@
 # CLAUDE.md
 
-Persistent context for Claude. Not human-facing documentation. Keep it short and current.
+Persistent context for Claude. Not human-facing documentation (that's README.md). Keep it short and current.
+
+## Working rules (highest priority)
+- Never edit files unless explicitly asked to. "Is this right?" / "fix it" about a pasted snippet means answer inline with corrected code. When in doubt, answer inline.
+- Approval for one edit does not cover the next. For non-trivial changes, propose first and wait.
+- Answer only what was asked. Don't list follow-up issues or next steps unless prompted - the developer is often midway through an implementation. Exception: when asked to review, mention everything relevant.
+- Learning project: the developer writes most code and wants to understand and own every line. Prefer small, reviewable steps; explain the *why* for non-obvious DX12 decisions (resource states, barriers, descriptors, sync) in the answer, not in code comments.
+- Don't add libraries, frameworks, or abstractions without asking. For meaningful design choices, give a recommendation with brief trade-offs and let the developer decide.
+- Token budget: developer is on the Claude Pro plan (usage capped per session and weekly, shared with claude.ai). Use targeted reads/greps, don't re-read files already in context, no subagents or web fetches unless needed or asked, keep answers concise. Flag expensive tasks and suggest a cheaper scope first.
 
 ## Project
-- Name: eftal
-- C++ DX12 renderer / engine / game. Target: Shader Model 6.0 (HLSL compiled with DXC).
-- Status: GLFW window + D3D12 clear-colour loop (device, 3-buffer flip swap chain, RTV heap, per-frame allocators, one command list, fence sync, debug layers). All of it is in `Game/Main.cpp`; Core and Graphics are empty placeholders. Splitting into Core/Graphics hasn't been designed yet - ask before restructuring.
-- Developer follows the 3dgep "Learning DirectX 12" tutorial (Lesson 1 onwards), cross-checked against Microsoft's DirectX-Graphics-Samples. Expect questions in that order; the developer writes most code and asks for review/explanations.
-- Purpose: a learning project. The developer wants to understand and own every line. Code quality and understanding matter more than speed of delivery.
+- eftal: C++20 DX12 renderer / engine / game, Shader Model 6.0 (HLSL via DXC), x64 Windows only.
+- Developer follows the 3dgep "Learning DirectX 12" tutorial (Lesson 1 onwards), cross-checked against Microsoft's DirectX-Graphics-Samples. Expect questions in that order.
+- Status:
+  - `Game/Main.cpp`: GLFW window + D3D12 clear-colour loop (device, 3-buffer flip swap chain, RTV heap, per-frame allocators, one command list, fence sync, debug layers + info queues). All rendering code is still here.
+  - `Core/Logging.{h,cpp}`: static `Logging` class. `Log(LogCat, fmt, ...)` printf-style; categories (`LogCat`) map to a 4-char name + console colour. Output: `OutputDebugStringA` if a debugger is attached; spawned console (`AllocConsole`, ANSI colours) in Debug. No file output yet (see TODOS.md).
+  - `Core/Macros.h`: shared utility macros (`ARRAY_COUNT`, `CLAMP`).
+  - `Core/Core.cpp`, `Graphics/Graphics.cpp`: empty placeholders. Splitting Main.cpp into Core/Graphics hasn't been designed - ask before restructuring.
 
-## Environment
-- Repo lives on Windows at this directory; Claude runs in WSL2 Ubuntu via `claude.bat`.
-- DX12 builds/runs on Windows, not in WSL. Building or running from here would go through Windows interop (`cmd.exe`, `cl.exe`, `cmake.exe`, etc.) - not set up yet. Ask before assuming a toolchain.
-- Git branch is `main`, remote `origin` on GitHub. Submodules: ThirdParty/glfw (3.4), ThirdParty/DirectX-Headers (v1.721.2).
-- Developer opens VS via `Launch.bat` (runs premake, opens eftal.sln, watches .lua changes and added/removed .h/.cpp files to regenerate). Generated .sln (root) and .vcxproj (Build/Projects/) are gitignored.
-- VS Output window: debug-layer/`OutputDebugString` text needs right-click > "Program Output" enabled. Game is a WindowedApp (`entrypoint "mainCRTStartup"`, keeps `main()`), so no console by default; the logger will `AllocConsole` in Debug when no debugger is attached.
+## Environment and build
+- Repo is on Windows; Claude runs in WSL2 Ubuntu via `claude.bat`. Builds/runs happen in VS2022 on Windows; Claude can't build. Ask before assuming a toolchain.
+- Git branch `main`, remote `origin` on GitHub. Submodules: ThirdParty/glfw (3.4), ThirdParty/DirectX-Headers (v1.721.2).
+- Premake5 (`Tools/premake/premake5.exe`). `Launch.bat` runs premake, opens eftal.sln, and regenerates on `.lua` edits or added/removed/renamed `.h`/`.cpp` files (`Tools/Launch.ps1`). `GenerateProjects.bat` regenerates once.
+- Output layout: exe + pdb in `Bin/<Config>/` (debug working dir); static libs in `Build/Lib/<Config>/`; intermediates in `Build/Obj/<Config>/<Project>/`; generated .vcxproj in `Build/Projects/`; .sln in root. All generated files gitignored.
+- Workspace-wide defines: `DEBUG`/`RELEASE` (0/1), `NOMINMAX`, `WIN32_LEAN_AND_MEAN`.
+- Game is a `WindowedApp` with `entrypoint "mainCRTStartup"` (keeps `main()`), so no console unless the logger spawns one.
+- VS Output window: `OutputDebugString` text needs right-click > "Program Output" enabled.
 
-## Usage budget
-- Developer is on the Claude Pro plan: usage is capped per session window and weekly, shared across claude.ai and Claude Code. See https://support.claude.com/en/articles/8325606-what-is-the-pro-plan
-- Be economical with tokens: targeted reads/greps over whole-file or repo-wide sweeps, don't re-read files already in context, no subagents or web fetches unless clearly needed or asked for, keep responses concise.
-- If a task looks expensive (large refactor, broad research, long debugging loop), say so and suggest a cheaper approach or scope before starting.
-
-## How to work with this developer
-- Always propose changes and wait for approval before editing code, unless the developer explicitly says to go ahead for a given task. Approval for one change does not cover the next.
-- Prefer small, reviewable steps over large drops of code. Explain the *why* for non-obvious DX12 decisions (resource states, barriers, descriptor heaps, synchronization) when proposing, not in code comments.
-- Answer only what was asked. Don't list follow-up issues or next steps unless prompted - the developer may be midway through an implementation.
-- Don't add libraries, frameworks, or abstractions without asking.
-- When there are meaningful design choices (e.g. ownership model, error handling, abstraction layer over D3D12), present a recommendation with brief trade-offs and let the developer decide.
-
-## Code style
-- Match existing code in the repo once it exists; existing code overrides anything here.
-- Observed conventions in Main.cpp: camelCase locals, `g_` prefix for file-scope globals, `ComPtr` for all COM objects, `CHECK_HR(expr)` for HRESULTs (temporary, main()-only), DirectX includes as `<directx/d3d12.h>` / `<directx/d3dx12.h>`.
-- Deferred work is tagged in code as `// TODO_<AREA>` (e.g. TODO_ASSERT, TODO_LOGGING, TODO_TEARING) and listed in TODOS.md.
-- Project sources live directly in `<Project>/` (no `src/`). The repo root is the include dir, so includes are module-qualified: `#include <Core/Logging.h>`. Third-party code goes in ThirdParty/ as a git submodule with its premake script beside it (`ThirdParty/<name>.lua`), never inside the submodule.
-- Avoid the C++ standard library (`std::string`, `std::format`, containers, etc.). Reason: performance and control over memory allocation. A custom stdlib replacement will be added later; until then prefer fixed buffers / plain C-style code. Whether CRT functions (`vsnprintf`, `fwrite`, ...) are acceptable is not yet decided - ask.
-- Comments: sparse and purposeful. Explain non-obvious intent or constraints only. No restating what the code does, no section-banner chatter, no "This function..." boilerplate.
+## Code conventions
+- Existing code overrides anything here. Code in `Core/` is the newest and best reflects the developer's style.
+- Core style: tabs; PascalCase types and functions; `mMember`, `inParam`, `gGlobal` prefixes; camelCase locals; `UPPER_SNAKE` for macros and `static constexpr` constants; `static` for file-local globals/tables.
+- `Game/Main.cpp` (older, tutorial-derived): 4-space indent, `gGlobal` prefix, `ComPtr` for all COM objects, `CHECK_HR(expr)` for HRESULTs (temporary, only usable in `main()`).
+- No C++ standard library (`std::string`, `std::format`, containers, ...): performance and memory control. A custom replacement comes later; use fixed buffers / C-style code. CRT functions (`snprintf`, `fputs`, ...) are in use in Logging but not formally approved - ask before relying on new ones.
+- Sources live directly in `<Project>/` (no `src/`). Repo root is the include dir, so includes are module-qualified: `#include <Core/Logging.h>`. Headers must compile on their own (e.g. `Logging.h` includes `<sal.h>` for `_Printf_format_string_`).
+- DirectX includes: `<directx/d3d12.h>` / `<directx/d3dx12.h>` (DirectX-Headers submodule), not the SDK's `<d3d12.h>`.
+- Third-party code: git submodule in `ThirdParty/` with its premake script beside it (`ThirdParty/<name>.lua`), never inside the submodule.
+- Deferred work: `// TODO_<AREA>` comments in code (TODO_ASSERT, TODO_LOGGING, TODO_MATHS_LIB, ...), each area listed in TODOS.md.
+- Comments: sparse. Only non-obvious intent or constraints. No restating the code, no banners, no "This function..." boilerplate.
 
 ## Decisions log
-Record agreed decisions here (date, decision, short reason).
-- 2026-11-22: Project initialised. DX12, SM 6.0 baseline. Reason: support older GPUs. Binding model is descriptor-table based on all hardware (no bindless).
-- 2026-11-22: FUTURE PLAN, not implemented: higher-SM features as optional tiers detected at runtime, with raster fallbacks. First candidate: DXR inline raytracing (RayQuery, SM 6.5) for shadows. Don't build towards this until the baseline renderer exists.
-- 2026-11-22: Premake5 (exe in Tools/premake/, run GenerateProjects.bat), VS2022, C++20, x64 only. Reason: developer choice.
-- 2026-11-22: Core/Graphics are static libs, not DLLs. Hot reload via MSVC Edit and Continue / Hot Reload (Debug, /ZI) instead of DLL reloading. Reason: no runtime cost, allows cross-lib inlining/LTO in Release.
-- 2026-11-23: Layout: executables build to /Bin/<Config> (also the debug working dir), static libs to /Build/Lib/<Config>, intermediates to /Build/Obj/<Config>/<Project>, generated projects to /Build/Projects. Reason: keep project folders source-only.
-- 2026-11-23: Avoid C++ stdlib (see Code style). Logging is printf-style varargs with fixed buffers; console colours via ANSI escape codes.
-- 2026-11-22: `DEBUG`/`RELEASE` always defined as 0/1 for `#if`; C4668 is an error (external `<...>` headers exempt, ThirdParty projects exempt).
-- 2026-11-22: Windowing via GLFW 3.4 (`GLFW_NO_API`, HWND via `glfwGetWin32Window`). Reason: small, easy to build with premake. SDL3 considered and rejected for now.
-- 2026-11-22: DirectX-Headers submodule for d3dx12.h and newer d3d12.h (header-only, no premake project). Linked system libs: d3d12, dxgi, dxguid (on Game). Reason: official source; NuGet/vcpkg/Agility SDK not needed at SM 6.0.
+Date, decision, short reason. Chronological.
+- 2026-11-22: DX12, SM 6.0 baseline to support older GPUs. Descriptor-table binding on all hardware (no bindless).
+- 2026-11-22: FUTURE PLAN, not implemented: higher-SM features as optional runtime-detected tiers with raster fallbacks (first candidate: DXR inline raytracing, SM 6.5, for shadows). Don't build towards this until the baseline renderer exists.
+- 2026-11-22: Premake5, VS2022, C++20, x64 only. Developer choice.
+- 2026-11-22: Core/Graphics are static libs, not DLLs. Hot reload via MSVC Edit and Continue (Debug, /ZI). No runtime cost, allows cross-lib inlining/LTO.
+- 2026-11-22: `DEBUG`/`RELEASE` always defined as 0/1 for `#if`; C4668 is an error (external `<...>` headers and ThirdParty projects exempt).
+- 2026-11-22: Windowing via GLFW 3.4 (`GLFW_NO_API`, HWND via `glfwGetWin32Window`). Small, easy to build with premake. SDL3 rejected for now.
+- 2026-11-22: DirectX-Headers submodule (header-only, no premake project). Game links d3d12, dxgi, dxguid. Agility SDK/NuGet/vcpkg not needed at SM 6.0.
+- 2026-11-23: Project layout and output dirs as described under Environment. Keeps project folders source-only.
+- 2026-11-23: Avoid C++ stdlib (see Code conventions).
+- 2026-11-23: Logging is printf-style varargs into a fixed stack buffer. Colour (ANSI codes) only on the console, never in the buffer sent to `OutputDebugStringA`. `Log` appends the newline; call sites don't.
+- 2026-11-23: `NOMINMAX` and `WIN32_LEAN_AND_MEAN` workspace-wide. Include excluded Win32 headers (winsock, shellapi, mmsystem, ...) explicitly if needed.
 
 ## Open questions
-- Minimum feature level: code uses 12_0 (guarantees resource binding tier 2). Suggested, not formally confirmed by the developer.
-- Error handling approach (HRESULT checks, exceptions, asserts)? Currently a temporary `CHECK_HR` macro.
-- Logging design (see TODOS.md).
-- Remaining third-party deps (D3D12MA, DirectXTex, ImGui, math lib - DirectXMath is included but unused)?
+- Minimum feature level: code uses 12_0 (guarantees resource binding tier 2). Suggested, not formally confirmed.
+- Error handling / asserts (TODO_ASSERT). Currently `CHECK_HR` plus `return -1`.
+- Logging: file output location and flush policy, buffering, levels vs categories (see TODOS.md).
+- Remaining third-party deps (D3D12MA, DirectXTex, ImGui) and the maths library (custom vs DirectXMath; see TODO_MATHS_LIB).
 - How to split Main.cpp into Core/Graphics.
-- Heavy CMake-only third-party libs: build via a premake `kind "Makefile"` project that runs CMake, or prebuilt libs? (Discussed, not decided.)
+- CMake-only third-party libs: premake `kind "Makefile"` project running CMake, or prebuilt libs? Discussed, not decided.
 - Shader compilation: offline DXC vs runtime?
+- Whether Main.cpp should be converted to the Core style (tabs etc.).
 
 ## Maintaining this file
-- Update it when decisions are made, structure changes, or something surprises Claude.
-- When the developer gives an explicit instruction about how to work or a convention, add it here directly without asking; they review via git.
-- For edits Claude infers on its own (e.g. a recurring correction, an observed convention), propose the edit rather than applying it.
-- Remove stale information rather than appending contradictions.
+- Update when decisions are made, structure changes, or something surprises Claude. Remove stale info rather than appending contradictions.
+- Explicit developer instructions about how to work or conventions: add here directly (developer reviews via git).
+- Edits Claude infers on its own (recurring corrections, observed conventions): propose first.
