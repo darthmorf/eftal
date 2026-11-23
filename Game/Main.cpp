@@ -29,7 +29,7 @@ static ComPtr<ID3D12InfoQueue> g_d3d12InfoQueue;
         HRESULT hr_ = (expr);                                                                   \
         if (FAILED(hr_))                                                                        \
         {                                                                                       \
-            Logging::Log("%s(%d): HRESULT 0x%08lX from %s\n", __FILE__, __LINE__, hr_, #expr); \
+            Logging::Log(LogCat::DX12, "%s(%d): HRESULT 0x%08lX from %s", __FILE__, __LINE__, hr_, #expr); \
             if (IsDebuggerPresent())                                                            \
                 __debugbreak();                                                                 \
             return -1;                                                                          \
@@ -42,10 +42,11 @@ int main()
 {
     Logging::Create();
 
+    Logging::Log(LogCat::GLFW, "Init GLFW");
     // Init GLFW
     glfwSetErrorCallback([](int error, const char* description)
     {
-        Logging::Log("[GLFW] Error %d: %s\n", error, description);
+        Logging::Log(LogCat::GLFW, "Error %d: %s", error, description);
     });
 
     if (!glfwInit())
@@ -64,6 +65,7 @@ int main()
        return -1; // TODO_ASSERT
 
     // Init DX12
+    Logging::Log(LogCat::DX12, "Init DX12");
 #if DEBUG
     ComPtr<ID3D12Debug> debugInterface;
     CHECK_HR(D3D12GetDebugInterface(IID_PPV_ARGS(&debugInterface)));
@@ -182,7 +184,7 @@ int main()
     CHECK_HR(commandList->Close());
 
     // Game loop
-    Logging::Log("[GLFW] Polling...\n");
+    Logging::Log(LogCat::Misc, "Polling...");
     while (!glfwWindowShouldClose(window))
     {
         // Wait until the GPU has finished the last frame that used this slot.
