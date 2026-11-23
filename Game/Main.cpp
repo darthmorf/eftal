@@ -18,8 +18,8 @@ using Microsoft::WRL::ComPtr;
 #if DEBUG
 #include <dxgidebug.h>
 
-static ComPtr<IDXGIInfoQueue> g_dxgiInfoQueue;
-static ComPtr<ID3D12InfoQueue> g_d3d12InfoQueue;
+static ComPtr<IDXGIInfoQueue> gDxgiInfoQueue;
+static ComPtr<ID3D12InfoQueue> gD3d12InfoQueue;
 #endif
 
 // TODO_ASSERT: replace with proper error handling. Only usable in main() because of the return.
@@ -72,11 +72,11 @@ int main()
     debugInterface->EnableDebugLayer();
 
     // Breaking with no debugger attached would crash the app instead.
-    CHECK_HR(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&g_dxgiInfoQueue)));
+    CHECK_HR(DXGIGetDebugInterface1(0, IID_PPV_ARGS(&gDxgiInfoQueue)));
     if (IsDebuggerPresent())
     {
-        g_dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-        g_dxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
+        gDxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+        gDxgiInfoQueue->SetBreakOnSeverity(DXGI_DEBUG_ALL, DXGI_INFO_QUEUE_MESSAGE_SEVERITY_ERROR, TRUE);
     }
 #endif
 
@@ -105,12 +105,12 @@ int main()
     CHECK_HR(D3D12CreateDevice(dxgiAdaptor.Get(), D3D_FEATURE_LEVEL_12_0, IID_PPV_ARGS(&d3d12device)));
 
 #if DEBUG
-    CHECK_HR(d3d12device.As(&g_d3d12InfoQueue));
+    CHECK_HR(d3d12device.As(&gD3d12InfoQueue));
     if (IsDebuggerPresent())
     {
-        g_d3d12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
-        g_d3d12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
-        g_d3d12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
+        gD3d12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_CORRUPTION, TRUE);
+        gD3d12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_ERROR, TRUE);
+        gD3d12InfoQueue->SetBreakOnSeverity(D3D12_MESSAGE_SEVERITY_WARNING, TRUE);
     }
 #endif
 
@@ -241,8 +241,8 @@ int main()
 
 #if DEBUG
     // The D3D12 info queue holds a device reference; release both before main returns.
-    g_d3d12InfoQueue.Reset();
-    g_dxgiInfoQueue.Reset();
+    gD3d12InfoQueue.Reset();
+    gDxgiInfoQueue.Reset();
 #endif
 
     // Cleanup GLFW
