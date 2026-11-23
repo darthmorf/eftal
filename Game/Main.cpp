@@ -1,3 +1,6 @@
+
+#include <Core/Logging.h>
+
 #include <cmath>
 #include <cstdio>
 
@@ -26,7 +29,7 @@ static ComPtr<ID3D12InfoQueue> g_d3d12InfoQueue;
         HRESULT hr_ = (expr);                                                                   \
         if (FAILED(hr_))                                                                        \
         {                                                                                       \
-            fprintf(stderr, "%s(%d): HRESULT 0x%08lX from %s\n", __FILE__, __LINE__, hr_, #expr); \
+            Logging::Log("%s(%d): HRESULT 0x%08lX from %s\n", __FILE__, __LINE__, hr_, #expr); \
             if (IsDebuggerPresent())                                                            \
                 __debugbreak();                                                                 \
             return -1;                                                                          \
@@ -34,17 +37,16 @@ static ComPtr<ID3D12InfoQueue> g_d3d12InfoQueue;
     } while (0)
 
 
-void glfwErr(int error, const char* description)
-{
-    // TODO_LOGGING
-    fprintf(stderr, "[GLFW] Error %d: %s\n", error, description);
-}
-
 
 int main()
 {
+    Logging::Create();
+
     // Init GLFW
-    glfwSetErrorCallback(glfwErr);
+    glfwSetErrorCallback([](int error, const char* description)
+    {
+        Logging::Log("[GLFW] Error %d: %s\n", error, description);
+    });
 
     if (!glfwInit())
         return -1; // TODO_ASSERT, Asserts when we have them
@@ -180,7 +182,7 @@ int main()
     CHECK_HR(commandList->Close());
 
     // Game loop
-    fprintf(stdout, "[GLFW] Polling...\n");
+    Logging::Log("[GLFW] Polling...\n");
     while (!glfwWindowShouldClose(window))
     {
         // Wait until the GPU has finished the last frame that used this slot.
@@ -244,6 +246,8 @@ int main()
     // Cleanup GLFW
     glfwDestroyWindow(window);
     glfwTerminate();
+
+    Logging::Destroy();
 
     return 0;
 }
